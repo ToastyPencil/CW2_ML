@@ -13,26 +13,34 @@ TypiClust coursework project for CIFAR-10 active learning reproduction and modif
 
 ## Recommended runner (your NVIDIA 3070)
 1. Open a terminal at the repo root.
-2. Run `bash scripts/run_local_gpu.sh`.
-3. Outputs are written to `outputs/active_learning` and `outputs/report_artifacts`.
+2. Install the package once: `python3 -m pip install -e .`
+3. Run `bash scripts/run_local_gpu.sh`.
+4. Outputs are written to `outputs/active_learning` and `outputs/report_artifacts`.
 
 This is the preferred path for your 3070 because it avoids Colab timeouts and is better for repeated runs.
 
 ## Google Colab runner
 1. Clone this repo in Colab.
 2. Enable GPU runtime.
-3. Run `bash scripts/run_colab.sh`.
-4. Download artifacts from `outputs/report_artifacts_colab`.
+3. Install package: `python3 -m pip install -e .`
+4. Run `bash scripts/run_colab.sh`.
+5. Download artifacts from `outputs/report_artifacts_colab`.
 
 Use Colab as backup when local CUDA setup is unavailable.
 
 ## Manual commands
 - Run all strategies:
-  - `PYTHONPATH=src python -m cw2_ml.experiments.run_active_learning --strategy all --output-dir outputs/active_learning`
+  - `python3 -m pip install -e .`
+  - `python3 -m cw2_ml.experiments.run_active_learning --strategy all --output-dir outputs/active_learning`
 - Smoke test run:
-  - `PYTHONPATH=src python -m cw2_ml.experiments.run_active_learning --strategy typiclust --smoke --output-dir outputs/smoke`
+  - `python3 -m cw2_ml.experiments.run_active_learning --strategy typiclust --smoke --output-dir outputs/smoke`
 - Generate report assets:
-  - `PYTHONPATH=src python scripts/generate_report_artifacts.py --input outputs/active_learning --output outputs/report_artifacts --baseline random`
+  - `python3 scripts/generate_report_artifacts.py --input outputs/active_learning --output outputs/report_artifacts --baseline random`
+
+## If you see `ModuleNotFoundError: cw2_ml...`
+Run:
+- `python3 -m pip install -e .`
+- then rerun the command with `python3 -m ...`
 
 ## Report files
 - Main LaTeX template: `report/main.tex`
