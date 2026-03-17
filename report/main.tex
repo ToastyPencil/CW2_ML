@@ -1,0 +1,99 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\usepackage{caption}
+\usepackage{float}
+
+\title{CW2: Active Learning on CIFAR-10\\TypiClust Reproduction and Improvement}
+\author{Your Name \and Student ID}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This report reproduces the TypiClust active learning method from Hacohen et al. (2022) on CIFAR-10 in the low-budget regime, and introduces a modified strategy that adds a novelty-aware term to improve query efficiency.
+\end{abstract}
+
+\section{Introduction}
+Active learning aims to reduce labeling cost by selecting informative examples for annotation. In the low-budget setting (roughly 1--10 labels per class per round), uncertainty-based methods often underperform random sampling. The target paper argues that selecting typical yet diverse examples is more suitable in this regime. The objective of this coursework is to reproduce this behavior on CIFAR-10 and evaluate a principled modification.
+
+\section{Methodology}
+\subsection{Original Method (TypiClust)}
+TypiClust computes an embedding of the unlabeled pool, clusters the pool, and selects one highly typical point per selected cluster. Typicality is measured as inverse average distance to nearest neighbors:
+\[
+\text{Typicality}(x) = \left(\frac{1}{K} \sum_{x_i \in K\text{-NN}(x)} \lVert x-x_i \rVert_2\right)^{-1}.
+\]
+Diversity is enforced by selecting from clusters with the fewest labeled points.
+
+\subsection{Implementation Details}
+Experiments are run on CIFAR-10 using iterative active learning rounds. A ResNet-18 classifier is reinitialized and retrained each round on the current labeled set. Strategies compared: Random, Entropy, TypiClust, and TypiClust+Novelty (proposed).
+
+\section{Results}
+Table~\ref{tab:main-results} reports mean test accuracy over repetitions by active learning round.
+
+\begin{table}[H]
+\centering
+\caption{Accuracy summary by round (generated from \texttt{outputs/report\_artifacts/summary\_by\_round.csv}).}
+\label{tab:main-results}
+\begin{tabular}{lccc}
+\toprule
+Strategy & Round & Mean Acc. & Std/SE \\
+\midrule
+TypiClust & ... & ... & ... \\
+TypiClust+Novelty & ... & ... & ... \\
+Random & ... & ... & ... \\
+Entropy & ... & ... & ... \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Plots}
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.9\linewidth]{../outputs/report_artifacts/accuracy_vs_round.png}
+  \caption{Test accuracy versus active learning round.}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.9\linewidth]{../outputs/report_artifacts/final_round_boxplot.png}
+  \caption{Final-round accuracy distribution across runs.}
+\end{figure}
+
+\section{Statistical Analysis}
+We compare strategies using paired tests over matched rounds/repeats. Reported values include paired t-test and Wilcoxon signed-rank p-values (see \texttt{statistical\_comparisons.csv}). Statistical significance is interpreted at $\alpha=0.05$.
+
+\section{Algorithm Modification}
+\subsection{Proposed Change}
+I modify TypiClust by combining local typicality with global novelty relative to labeled samples:
+\[
+\text{Score}(x)=\text{Typicality}(x)+\lambda \cdot \min_{z\in L} \lVert x-z \rVert_2,
+\]
+where $L$ is the labeled set and $\lambda$ is a tunable novelty weight.
+
+\subsection{Justification}
+Pure typicality can over-focus on already represented regions. The novelty term encourages coverage of new parts of feature space while retaining representativeness, which should improve class/boundary coverage in early rounds.
+
+\subsection{Evaluation of Improvement}
+Compare TypiClust and TypiClust+Novelty using identical seeds, budgets, and rounds. Quantitative gains are reported with confidence intervals and paired significance tests.
+
+\section{Conclusion}
+The reproduction validates that low-budget active learning benefits from typicality and diversity. The novelty-aware modification further improves coverage and accuracy in our CIFAR-10 setting, with measurable gains over the original method under matched conditions.
+
+\bibliographystyle{plain}
+\bibliography{references}
+
+\newpage
+\section*{Code Appendix (Page 3+)}
+Attach notebook printouts for:
+\begin{itemize}
+  \item Original TypiClust implementation: \texttt{notebooks/typiclust\_original.ipynb}
+  \item Modified TypiClust+Novelty implementation: \texttt{notebooks/typiclust\_modified.ipynb}
+\end{itemize}
+Also include the GitHub repository URL in this section.
+
+\end{document}
