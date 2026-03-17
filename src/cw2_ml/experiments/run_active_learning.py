@@ -40,6 +40,7 @@ class ActiveLearningConfig:
     knn_k: int = 20
     min_cluster_size: int = 5
     novelty_weight: float = 0.2
+    num_workers: int = 2
     smoke: bool = False
     download: bool = True
     fake_train_size: int = 256
@@ -159,7 +160,7 @@ def _single_run(
     set_global_seed(seed)
     rng = np.random.default_rng(seed)
     device = _resolve_device(config.device)
-    num_workers = 0 if config.smoke else 2
+    num_workers = 0 if config.smoke else config.num_workers
 
     bundle = _load_bundle(config)
     train_size = len(bundle.train)
@@ -168,6 +169,10 @@ def _single_run(
     labeled_indices: set[int] = set(_sample_random(rng, all_train_indices, config.init_labeled_size))
     embeddings = None
     if strategy in {"typiclust", "typiclust_novelty"}:
+        print(
+            f"[{strategy}] repeat={repeat_id}: extracting embeddings on device={device} ...",
+            flush=True,
+        )
         feat_model = build_feature_extractor(pretrained=not config.smoke)
         eval_loader = build_index_loader(
             dataset=bundle.train_eval,
@@ -186,6 +191,11 @@ def _single_run(
     metrics: list[dict[str, object]] = []
     model: torch.nn.Module | None = None
     for round_idx in range(1, config.rounds + 1):
+        print(
+            f"[{strategy}] repeat={repeat_id}: round {round_idx}/{config.rounds} starting "
+            f"(labeled={len(labeled_indices)})",
+            flush=True,
+        )
         unlabeled_indices = [idx for idx in all_train_indices if idx not in labeled_indices]
         if not unlabeled_indices:
             break
@@ -237,6 +247,11 @@ def _single_run(
             weight_decay=config.weight_decay,
         )
         test_accuracy = evaluate_classifier(model=model, data_loader=test_loader, device=device)
+        print(
+            f"[{strategy}] repeat={repeat_id}: round {round_idx} done "
+            f"(labeled={len(labeled_indices)}, acc={test_accuracy:.4f})",
+            flush=True,
+        )
 
         metrics.append(
             {
@@ -255,7 +270,9 @@ def run_experiments(config: ActiveLearningConfig, strategies: list[str]) -> pd.D
     for strategy in strategies:
         if strategy not in SUPPORTED_STRATEGIES:
             raise ValueError(f"Unsupported strategy: {strategy}")
+        print(f"=== Strategy: {strategy} ===", flush=True)
         for repeat_id in range(config.repeats):
+            print(f"--- Repeat {repeat_id + 1}/{config.repeats} ---", flush=True)
             rows.extend(_single_run(config=config, strategy=strategy, repeat_id=repeat_id))
     return pd.DataFrame(rows)
 
@@ -322,6 +339,7 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--knn-k", type=int, default=20)
     parser.add_argument("--min-cluster-size", type=int, default=5)
     parser.add_argument("--novelty-weight", type=float, default=0.2)
+    parser.add_argument("--num-workers", type=int, default=2)
     parser.add_argument("--smoke", action="store_true")
     parser.add_argument("--no-download", action="store_true")
     return parser.parse_args()
@@ -353,6 +371,7 @@ def main() -> None:
         knn_k=args.knn_k,
         min_cluster_size=args.min_cluster_size,
         novelty_weight=args.novelty_weight,
+        num_workers=args.num_workers,
         smoke=args.smoke,
         download=not args.no_download,
     )
