@@ -5,7 +5,7 @@ from dataclasses import dataclass
 class ExperimentConfig:
     dataset: str = "cifar10"
     data_dir: str = "data"
-    outputs_dir: str = "outputs"
+    outputs_dir: str = "outputs/final_submission"
     seed: int = 42
 
     init_labeled_size: int = 0
@@ -26,5 +26,14 @@ class ExperimentConfig:
     strategy: str = "typiclust"
     novelty_weight: float = 0.2
     repeats: int = 3
-    device: str = "cuda"
+    device: str = "auto"
     smoke: bool = False
+    ssl_checkpoint_path: str | None = None
+    ssl_embeddings_path: str | None = None
+
+    def __post_init__(self) -> None:
+        base_output = self.outputs_dir.rstrip("/\\")
+        if self.ssl_checkpoint_path is None:
+            self.ssl_checkpoint_path = f"{base_output}/ssl/simclr_resnet18.pt"
+        if self.ssl_embeddings_path is None:
+            self.ssl_embeddings_path = f"{base_output}/ssl/cifar10_embeddings.npy"

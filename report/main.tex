@@ -1,99 +1,113 @@
-\documentclass[10pt,a4paper]{article}
-\usepackage[margin=1in]{geometry}
+\documentclass[10pt,a4paper,twocolumn]{article}
+\usepackage[margin=0.7in]{geometry}
 \usepackage{graphicx}
 \usepackage{booktabs}
 \usepackage{amsmath}
 \usepackage{hyperref}
 \usepackage{caption}
 \usepackage{float}
+\usepackage{listings}
+\setlength{\textfloatsep}{8pt plus 1pt minus 2pt}
+\setlength{\intextsep}{8pt plus 1pt minus 2pt}
+\setlength{\abovecaptionskip}{4pt}
+\setlength{\belowcaptionskip}{2pt}
+\lstset{
+  basicstyle=\ttfamily\scriptsize,
+  breaklines=true,
+  columns=fullflexible,
+  keepspaces=true,
+  showstringspaces=false,
+}
 
-\title{CW2: Active Learning on CIFAR-10\\TypiClust Reproduction and Improvement}
-\author{Your Name \and Student ID}
-\date{\today}
+\title{CW2: Active Learning on CIFAR-10\\TypiClust Reproduction and Adaptive Extension}
+\author{Arrnav Gupta\\24032130\\King's College London}
+\date{March 26, 2026}
 
 \begin{document}
 \maketitle
 
 \begin{abstract}
-This report reproduces the TypiClust active learning method from Hacohen et al. (2022) on CIFAR-10 in the low-budget regime, and introduces a modified strategy that adds a novelty-aware term to improve query efficiency.
+This report reproduces the low-budget TypiClust setting of Hacohen et al.~\cite{hacohen2022active} on CIFAR-10 using self-supervised image representations, then evaluates an adaptive modification that preserves pure typicality in the cold-start regime and gradually adds novelty and uncertainty later. The final pipeline used 500 SimCLR pretraining epochs on an RTX 3070 and compared Random, Entropy, TypiClust, and TypiClust+Adaptive over five active learning rounds with matched seeds.
 \end{abstract}
 
 \section{Introduction}
-Active learning aims to reduce labeling cost by selecting informative examples for annotation. In the low-budget setting (roughly 1--10 labels per class per round), uncertainty-based methods often underperform random sampling. The target paper argues that selecting typical yet diverse examples is more suitable in this regime. The objective of this coursework is to reproduce this behavior on CIFAR-10 and evaluate a principled modification.
+Active learning reduces annotation cost by querying only a small subset of examples for labeling. Hacohen et al.~\cite{hacohen2022active} argue that the low-budget regime is special: when only a few labels are available per round, representative examples can matter more than classical uncertainty heuristics. CIFAR-10 is a useful benchmark for testing that claim because it is widely used, computationally manageable, and still exposes whether a query strategy can cover the data distribution under severe label scarcity.
 
 \section{Methodology}
-\subsection{Original Method (TypiClust)}
-TypiClust computes an embedding of the unlabeled pool, clusters the pool, and selects one highly typical point per selected cluster. Typicality is measured as inverse average distance to nearest neighbors:
+TypiClust computes an embedding of the unlabeled pool, clusters the pool, and repeatedly selects the most typical point from the cluster with the fewest labeled examples. Typicality is measured as inverse average distance to nearest neighbours:
 \[
 \text{Typicality}(x) = \left(\frac{1}{K} \sum_{x_i \in K\text{-NN}(x)} \lVert x-x_i \rVert_2\right)^{-1}.
 \]
-Diversity is enforced by selecting from clusters with the fewest labeled points.
-
-\subsection{Implementation Details}
-Experiments are run on CIFAR-10 using iterative active learning rounds. A ResNet-18 classifier is reinitialized and retrained each round on the current labeled set. Strategies compared: Random, Entropy, TypiClust, and TypiClust+Novelty (proposed).
+Diversity is therefore enforced through clustering, while representativeness is enforced within each cluster through local density. The reproduction uses CIFAR-10, a SimCLR-style ResNet-18 encoder~\cite{chen2020simclr} for self-supervised representation learning, L2-normalized embeddings, and a supervised ResNet-18 classifier retrained after each query round. Following Appendix F of the paper, clustering uses \(K=\min(|L|+B,\texttt{max\_clusters})\), typicality uses up to 20 neighbours, and tiny clusters are filtered before selection.
+\IfFileExists{generated_methodology_text.tex}{\input{generated_methodology_text.tex}}{}
 
 \section{Results}
-Table~\ref{tab:main-results} reports mean test accuracy over repetitions by active learning round.
+Table~\ref{tab:paper-results} summarises the paper's CIFAR-10 claims, while Table~\ref{tab:main-results} reports the final-round numbers from the completed 500-epoch reproduction. This makes it possible to compare the published trend with the behaviour of the local run directly.
 
 \begin{table}[H]
 \centering
-\caption{Accuracy summary by round (generated from \texttt{outputs/report\_artifacts/summary\_by\_round.csv}).}
-\label{tab:main-results}
-\begin{tabular}{lccc}
+\scriptsize
+\caption{Qualitative CIFAR-10 findings reported by Hacohen et al.~\cite{hacohen2022active}.}
+\label{tab:paper-results}
+\begin{tabular}{p{0.14\linewidth}p{0.22\linewidth}p{0.54\linewidth}}
 \toprule
-Strategy & Round & Mean Acc. & Std/SE \\
+Figure & Setting & Reported finding \\
 \midrule
-TypiClust & ... & ... & ... \\
-TypiClust+Novelty & ... & ... & ... \\
-Random & ... & ... & ... \\
-Entropy & ... & ... & ... \\
+Fig.~4a & Fully supervised, 5 low-budget iterations & Both TypiClust variants outperform Random and uncertainty baselines by a large margin. \\
+Fig.~5a & Fully supervised with self-supervised embedding & TypiClust again outperforms the baselines by a large margin. \\
+Fig.~6a & Semi-supervised FlexMatch with 10 CIFAR-10 labels & Both TypiClust variants outperform random sampling, while uncertainty baselines do not improve on Random. \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\section{Plots}
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.9\linewidth]{../outputs/report_artifacts/accuracy_vs_round.png}
-  \caption{Test accuracy versus active learning round.}
-\end{figure}
+\IfFileExists{generated_results_text.tex}{\input{generated_results_text.tex}}{}
+
+\begin{table}[H]
+\centering
+\scriptsize
+\caption{Final-round reproduction results on CIFAR-10.}
+\label{tab:main-results}
+\begin{tabular}{lccc}
+\toprule
+Strategy & Round & Mean Acc. & SE \\
+\midrule
+TypiClust & 5 & 17.97\% & 0.54\% \\
+TypiClust+Adaptive & 5 & 20.77\% & 1.06\% \\
+Random & 5 & 20.82\% & 0.63\% \\
+Entropy & 5 & 19.93\% & 0.43\% \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.9\linewidth]{../outputs/report_artifacts/final_round_boxplot.png}
-  \caption{Final-round accuracy distribution across runs.}
+  \includegraphics[width=0.49\linewidth]{accuracy_vs_round.png}\hfill
+  \includegraphics[width=0.49\linewidth]{final_round_boxplot.png}
+  \caption{Left: mean test accuracy by active learning round. Right: final-round distribution across three repeats.}
 \end{figure}
 
 \section{Statistical Analysis}
-We compare strategies using paired tests over matched rounds/repeats. Reported values include paired t-test and Wilcoxon signed-rank p-values (see \texttt{statistical\_comparisons.csv}). Statistical significance is interpreted at $\alpha=0.05$.
+Paired tests were computed on the final round over matched repeats (\(n=3\)). Reported values include paired t-tests and Wilcoxon signed-rank tests, with significance interpreted at \(\alpha=0.05\). Because the repetition count is small, effect size and direction are discussed alongside p-values rather than relying on significance alone.
+\IfFileExists{generated_stats_text.tex}{\input{generated_stats_text.tex}}{}
 
 \section{Algorithm Modification}
-\subsection{Proposed Change}
-I modify TypiClust by combining local typicality with global novelty relative to labeled samples:
+The targeted improvement pass replaces the original novelty-only variant with a late-stage hybrid score. The modified method keeps pure TypiClust in the earliest low-budget rounds, activates a normalized novelty term once the labeled set has initial coverage, and then adds uncertainty only in later rounds when the classifier has enough supervision to make entropy informative:
 \[
-\text{Score}(x)=\text{Typicality}(x)+\lambda \cdot \min_{z\in L} \lVert x-z \rVert_2,
+\text{Score}(x)=\widehat{\text{Typicality}}(x)+\lambda_t \cdot \widehat{\text{Novelty}}(x)+\mu_t \cdot \widehat{\text{Entropy}}(x),
 \]
-where $L$ is the labeled set and $\lambda$ is a tunable novelty weight.
-
-\subsection{Justification}
-Pure typicality can over-focus on already represented regions. The novelty term encourages coverage of new parts of feature space while retaining representativeness, which should improve class/boundary coverage in early rounds.
-
-\subsection{Evaluation of Improvement}
-Compare TypiClust and TypiClust+Novelty using identical seeds, budgets, and rounds. Quantitative gains are reported with confidence intervals and paired significance tests.
+where \(\lambda_t\) increases from round 3, \(\mu_t\) increases from round 4, and all terms are min-max normalized within the chosen cluster. This is justified by the paper's budget-dependent argument and by the tuning evidence from the reproduction: when the labeled pool is almost empty, representative points should dominate; after that, novelty improves coverage; only later should the method trust classifier uncertainty. The evaluation therefore compares TypiClust and TypiClust+Adaptive with identical seeds, budgets, cached SSL embeddings, and training settings.
 
 \section{Conclusion}
-The reproduction validates that low-budget active learning benefits from typicality and diversity. The novelty-aware modification further improves coverage and accuracy in our CIFAR-10 setting, with measurable gains over the original method under matched conditions.
+\IfFileExists{generated_conclusion_text.tex}{\input{generated_conclusion_text.tex}}{}
 
 \bibliographystyle{plain}
 \bibliography{references}
 
+\onecolumn
 \newpage
 \section*{Code Appendix (Page 3+)}
-Attach notebook printouts for:
-\begin{itemize}
-  \item Original TypiClust implementation: \texttt{notebooks/typiclust\_original.ipynb}
-  \item Modified TypiClust+Novelty implementation: \texttt{notebooks/typiclust\_modified.ipynb}
-\end{itemize}
-Also include the GitHub repository URL in this section.
+This appendix accompanies the submission with notebook printouts of the key source files for the original and modified query strategies.
+GitHub repository URL: \url{https://github.com/ToastyPencil/CW2_ML}.
+\input{generated_notebook_appendix.tex}
 
 \end{document}
