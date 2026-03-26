@@ -79,12 +79,12 @@ Entropy & 5 & 19.93\% & 0.43\% \\
 \end{tabular}
 \end{table}
 
-\begin{figure}[H]
+\begin{figure*}[t]
   \centering
-  \includegraphics[width=0.49\linewidth]{accuracy_vs_round.png}\hfill
-  \includegraphics[width=0.49\linewidth]{final_round_boxplot.png}
+  \includegraphics[width=0.49\textwidth]{accuracy_vs_round.png}\hfill
+  \includegraphics[width=0.49\textwidth]{final_round_boxplot.png}
   \caption{Left: mean test accuracy by active learning round. Right: final-round distribution across three repeats.}
-\end{figure}
+\end{figure*}
 
 \section{Statistical Analysis}
 Paired tests were computed on the final round over matched repeats (\(n=3\)). Reported values include paired t-tests and Wilcoxon signed-rank tests, with significance interpreted at \(\alpha=0.05\). Because the repetition count is small, effect size and direction are discussed alongside p-values rather than relying on significance alone.
