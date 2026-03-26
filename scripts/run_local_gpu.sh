@@ -18,11 +18,11 @@ python -m cw2_ml.experiments.run_active_learning \
   --repeats "${REPEATS:-3}" \
   --rounds "${ROUNDS:-5}" \
   --query-batch-size "${BATCH:-10}" \
-  --train-epochs "${EPOCHS:-20}" \
+  --train-epochs "${EPOCHS:-100}" \
   --device cuda \
-  --output-dir "${OUTPUT_DIR:-outputs/active_learning}"
+  --output-dir "${OUTPUT_DIR:-outputs/final_submission}"
 
 python scripts/generate_report_artifacts.py \
-  --input "${OUTPUT_DIR:-outputs/active_learning}" \
-  --output "${ARTIFACT_DIR:-outputs/report_artifacts}" \
+  --input "${OUTPUT_DIR:-outputs/final_submission}" \
+  --output "${ARTIFACT_DIR:-outputs/report_artifacts_final}" \
   --baseline random

@@ -13,11 +13,11 @@ python -m cw2_ml.experiments.run_active_learning \
   --repeats "${REPEATS:-2}" \
   --rounds "${ROUNDS:-5}" \
   --query-batch-size "${BATCH:-10}" \
-  --train-epochs "${EPOCHS:-15}" \
+  --train-epochs "${EPOCHS:-100}" \
   --device cuda \
-  --output-dir "${OUTPUT_DIR:-outputs/active_learning_colab}"
+  --output-dir "${OUTPUT_DIR:-outputs/final_submission_colab}"
 
 python scripts/generate_report_artifacts.py \
-  --input "${OUTPUT_DIR:-outputs/active_learning_colab}" \
-  --output "${ARTIFACT_DIR:-outputs/report_artifacts_colab}" \
+  --input "${OUTPUT_DIR:-outputs/final_submission_colab}" \
+  --output "${ARTIFACT_DIR:-outputs/report_artifacts_final_colab}" \
   --baseline random
