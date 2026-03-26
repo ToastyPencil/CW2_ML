@@ -53,8 +53,11 @@ def paired_summary(
     mean_diff = float(diff.mean())
     std_diff = float(diff.std(ddof=1)) if len(diff) > 1 else 0.0
 
-    t_result = stats.ttest_rel(a, b, alternative="greater", nan_policy="omit")
-    p_t = float(1.0 if pd.isna(t_result.pvalue) else t_result.pvalue)
+    if len(diff) >= 2 and not (diff == 0).all():
+        t_result = stats.ttest_rel(a, b, alternative="greater", nan_policy="omit")
+        p_t = float(1.0 if pd.isna(t_result.pvalue) else t_result.pvalue)
+    else:
+        p_t = 1.0
     if len(diff) >= 2 and not (diff == 0).all():
         try:
             p_w = float(stats.wilcoxon(diff, alternative="greater").pvalue)

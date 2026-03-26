@@ -1,12 +1,12 @@
 # Report Instructions
 
-1. Run experiments and generate artifacts:
-   - `python -m cw2_ml.experiments.run_active_learning --strategy all --output-dir outputs/active_learning`
-   - `python scripts/generate_report_artifacts.py --input outputs/active_learning --output outputs/report_artifacts`
-2. Upload `report/main.tex` and `report/references.bib` to Overleaf.
-3. Replace placeholder table entries with generated CSV values.
-4. Keep the core report within two pages (excluding title and references).
-5. Add notebook printouts after page 2:
+1. Run the canonical experiment suite into `outputs/final_submission`.
+2. Generate report artifacts into `outputs/report_artifacts_final`.
+3. Upload `report/main.tex`, `report/references.bib`, `accuracy_vs_round.png`, and `final_round_boxplot.png` to Overleaf.
+4. Replace placeholder values with the generated CSV summaries and keep the plot filenames unchanged so the LaTeX template resolves them directly.
+5. Keep the main body at two pages, excluding the title page and references.
+6. Append notebook printouts after page 2:
    - `notebooks/typiclust_original.ipynb`
    - `notebooks/typiclust_modified.ipynb`
-6. Include your GitHub repository link in the appendix section.
+7. Rebuild the annotated appendix notebooks before export with `python3 scripts/build_appendix_notebooks.py`.
+8. Add the GitHub repository URL in the appendix section.

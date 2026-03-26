@@ -1,9 +1,15 @@
 .venv/
+.worktrees/
 __pycache__/
 .pytest_cache/
 *.pyc
 
-data/
-outputs/
+/data/
+/outputs/
 
 .ipynb_checkpoints/
+report/*.aux
+report/*.bbl
+report/*.blg
+report/*.log
+report/*.out

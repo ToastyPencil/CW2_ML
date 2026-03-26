@@ -20,6 +20,30 @@ class _ResNet18Features(nn.Module):
         return torch.flatten(feat, 1)
 
 
+class SimCLRResNet18(nn.Module):
+    def __init__(
+        self,
+        *,
+        pretrained: bool = False,
+        projection_dim: int = 128,
+        projection_hidden_dim: int = 512,
+    ) -> None:
+        super().__init__()
+        self.encoder = build_feature_extractor(pretrained=pretrained)
+        self.projector = nn.Sequential(
+            nn.Linear(512, projection_hidden_dim),
+            nn.ReLU(inplace=True),
+            nn.Linear(projection_hidden_dim, projection_dim),
+        )
+
+    def encode(self, x: torch.Tensor) -> torch.Tensor:
+        return self.encoder(x)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        embeddings = self.encode(x)
+        return self.projector(embeddings)
+
+
 def build_resnet18_classifier(num_classes: int = 10, pretrained: bool = False) -> nn.Module:
     if pretrained:
         try:
@@ -40,6 +64,18 @@ def build_feature_extractor(pretrained: bool = True) -> nn.Module:
         except Exception:
             return _ResNet18Features(None)
     return _ResNet18Features(None)
+
+
+def build_simclr_resnet18(
+    pretrained: bool = False,
+    projection_dim: int = 128,
+    projection_hidden_dim: int = 512,
+) -> nn.Module:
+    return SimCLRResNet18(
+        pretrained=pretrained,
+        projection_dim=projection_dim,
+        projection_hidden_dim=projection_hidden_dim,
+    )
 
 
 @torch.no_grad()
